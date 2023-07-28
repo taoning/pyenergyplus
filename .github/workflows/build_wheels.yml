@@ -40,6 +40,8 @@ jobs:
 
   build_test_osx:
     runs-on: macos-latest
+    env:
+      FC: gfortran-11
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +60,7 @@ jobs:
       run: |
         pip install wheel
         git submodule update --init --recursive
-        brew install ninja gcc
+        brew install ninja
         python setup.py bdist_wheel
 
     - name: Upload artifacts
