@@ -111,7 +111,10 @@ class CMakeBuild(build_ext):
         lib_files = pdir.glob(f"*.{file_extension}")
         for file in lib_files:
             shutil.move(str(file), build_lib)
-        shutil.move(str(pdir / "ReadVarsESO"), build_lib)
+        readvarseso_path = pdir / "ReadVarsESO"
+        if platform.system() == "Windows":
+            readvarseso_path = readvarseso_path.with_suffix(".exe")
+        shutil.move(str(readvarseso_path), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
             shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
