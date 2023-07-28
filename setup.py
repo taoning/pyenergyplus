@@ -13,26 +13,33 @@ wheels = {
         "x86_64": {
             "wheel": "macosx_10_13_x86_64",
             "zip_tag": "OSX",
+            "build_tool": "Ninja",
         },
         "arm64": {
             "wheel": "macosx_11_0_arm64",
             "zip_tag": "OSX_arm64",
+            "build_tool": "Ninja",
         },
     },
     "linux": {
         "x86_64": {
             "wheel": "manylinux1_x86_64",
             "zip_tag": "Linux",
+            "build_tool": "Ninja",
         }
     },
     "windows": {
         "i386": {
             "wheel": "win32",
             "zip_tag": "Windows",
+            "arch": "x64",
+            "build_tool": "Visual Studio 16 2019",
         },
         "amd64": {
             "wheel": "win_amd64",
             "zip_tag": "Windows",
+            "arch": "x64",
+            "build_tool": "Visual Studio 16 2019",
         },
     },
 }
@@ -70,17 +77,29 @@ class CMakeBuild(build_ext):
         os.makedirs(build_temp, exist_ok=True)
         os.chdir(build_temp)
 
+        cfg = wheels[platform.system().lower()][platform.machine().lower()]
+        if "arch" in cfg:
+            arch = cfg['arch']
+        else:
+            arch = None
+
+        build_tool = cfg["build_tool"]
+
         # call cmake to configure the build
-        sp.check_call(
-            [
-                "cmake",
-                # "-G",
-                # "Ninja",
+        cmake_cmd = [
+            "cmake",
+            "-G",
+            build_tool,
+        ]
+        if arch:
+            cmake_cmd += ["-A", arch]
+        cmake_cmd += [
                 "-DBUILD_FORTRAN=ON",
                 "-DCMAKE_BUILD_TYPE=Release",
                 ext.cmake_source_dir,
-            ]
-        )
+        ]
+
+        sp.check_call(cmake_cmd)
 
         # call cmake to build the sources
         sp.check_call(["cmake", "--build", "."])

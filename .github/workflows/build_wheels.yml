@@ -1,0 +1,95 @@
+name: Build wheels
+
+on:
+  push:
+    branches: [ main ]
+
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: build wheels
+      run: |
+        pip install wheel
+        python setup.py bdist_wheel
+
+    - name: Upload artifacts
+      uses: actions/checkout@v3
+      with:
+        name: dist
+        path: ./dist
+
+
+  build_test_osx:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install and test
+      run: |
+        pip install wheel
+        python setup.py bdist_wheel
+
+    - name: Upload artifacts
+      uses: actions/checkout@v3
+      with:
+        name: dist
+        path: ./dist
+
+
+  build_test_windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install and test
+      run: |
+        pip install wheel
+        python setup.py bdist_wheel
+
+    - name: Upload artifacts
+      uses: actions/checkout@v3
+      with:
+        name: dist
+        path: ./dist
