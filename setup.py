@@ -114,7 +114,7 @@ class CMakeBuild(build_ext):
         shutil.move(str(pdir / "ReadVarsESO"), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
-            shutil.move(file, os.path.join(build_lib, "pyenergyplus"))
+            shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
         os.chdir(cwd)
 
 
