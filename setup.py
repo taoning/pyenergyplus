@@ -86,36 +86,38 @@ class CMakeBuild(build_ext):
         build_tool = cfg["build_tool"]
 
         # call cmake to configure the build
+
+        pdir = Path("Products")
+        readvarseso_path = pdir / "ReadVarsESO"
+
         cmake_cmd = [
             "cmake",
             "-G",
             build_tool,
         ]
+
+        cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
             cmake_cmd += ["-A", arch]
         cmake_cmd.append("-DBUILD_FORTRAN=ON")
         if platform.system() != "Windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
+        else:
+            cmake_build_cmd += ["--config", "Release"]
+            pdir = Path("Products") / "Release"
+            readvarseso_path = readvarseso_path.with_suffix(".exe")
         cmake_cmd.append(ext.cmake_source_dir)
 
         sp.check_call(cmake_cmd)
 
-        # call cmake to build the sources
-        cmake_build_cmd = ["cmake", "--build", "."]
-        if platform.system() == "Windows":
-            cmake_build_cmd += ["--config", "Release"]
         sp.check_call(cmake_build_cmd)
 
         output_dir = os.path.join(build_lib, ext.name)
         os.makedirs(output_dir, exist_ok=True)
-        pdir = Path("Products")
         file_extension = platform_file_extension[platform.system()]
         lib_files = pdir.glob(f"*.{file_extension}*")
         for file in lib_files:
             shutil.move(str(file), build_lib)
-        readvarseso_path = pdir / "ReadVarsESO"
-        if platform.system() == "Windows":
-            readvarseso_path = readvarseso_path.with_suffix(".exe")
         shutil.move(str(readvarseso_path), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):

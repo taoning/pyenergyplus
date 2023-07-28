@@ -7,6 +7,9 @@ on:
   # run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  EnergyPlus_Commit: 87ed9199d4
+
 jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
@@ -27,7 +30,7 @@ jobs:
     - name: build wheels
       run: |
         pip install wheel
-        git submodule update --init --recursive
+        git submodule update --init --recursive --checkout $EnergyPlus_Commit
         sudo apt-get install ninja-build
         python setup.py bdist_wheel
 
@@ -58,7 +61,7 @@ jobs:
     - name: Install and test
       run: |
         pip install wheel
-        git submodule update --init --recursive
+        git submodule update --init --recursive --checkout $EnergyPlus_Commit
         brew install ninja
         python setup.py bdist_wheel
 
@@ -92,7 +95,7 @@ jobs:
     - name: Install and test
       run: |
         pip install wheel
-        git submodule update --init --recursive
+        git submodule update --init --recursive --checkout $EnergyPlus_Commit
         python setup.py bdist_wheel
 
     - uses: actions/upload-artifact@v3
