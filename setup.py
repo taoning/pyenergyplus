@@ -111,7 +111,7 @@ class CMakeBuild(build_ext):
         lib_files = pdir.glob(f"*.{file_extension}")
         for file in lib_files:
             shutil.move(file, build_lib)
-        shutil.move(pdir / "ReadVarsESO", build_lib)
+        shutil.move(str(pdir / "ReadVarsESO"), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
             shutil.move(file, os.path.join(build_lib, "pyenergyplus"))

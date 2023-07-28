@@ -58,7 +58,7 @@ jobs:
       run: |
         pip install wheel
         git submodule update --init --recursive
-        brew install ninja
+        brew install ninja gcc
         python setup.py bdist_wheel
 
     - name: Upload artifacts
