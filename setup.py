@@ -107,6 +107,7 @@ class CMakeBuild(build_ext):
         output_dir = os.path.join(build_lib, ext.name)
         os.makedirs(output_dir, exist_ok=True)
         pdir = Path("Products")
+        print(os.listdir(pdir))
         file_extension = platform_file_extension[platform.system()]
         lib_files = pdir.glob(f"*.{file_extension}")
         for file in lib_files:
