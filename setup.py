@@ -5,6 +5,7 @@ import shutil
 import platform
 from pathlib import Path
 import subprocess as sp
+import sys
 
 from wheel.bdist_wheel import bdist_wheel
 
@@ -95,6 +96,8 @@ class CMakeBuild(build_ext):
             "-G",
             build_tool,
         ]
+        pypath = sys.executable
+        print(pypath)
 
         cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
@@ -103,6 +106,9 @@ class CMakeBuild(build_ext):
         if platform.system() != "Windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
         else:
+            cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
+            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.8")
+            cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
             readvarseso_path = readvarseso_path.with_suffix(".exe")
