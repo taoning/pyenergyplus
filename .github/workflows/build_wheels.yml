@@ -39,6 +39,7 @@ jobs:
 
     - name: test
       run: |
+        pip install .
         cd test
         python test.py
 
@@ -78,6 +79,7 @@ jobs:
          
     - name: test
       run: |
+        pip install .
         cd test
         python test.py
 
@@ -119,6 +121,7 @@ jobs:
 
     - name: test
       run: |
+        pip install .
         cd test
         python test.py
 
