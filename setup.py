@@ -115,7 +115,7 @@ class CMakeBuild(build_ext):
         output_dir = os.path.join(build_lib, ext.name)
         os.makedirs(output_dir, exist_ok=True)
         file_extension = platform_file_extension[platform.system()]
-        lib_files = pdir.glob(f"*.{file_extension}*")
+        lib_files = pdir.glob(f"*.{file_extension}")
         for file in lib_files:
             shutil.move(str(file), build_lib)
         shutil.move(str(readvarseso_path), build_lib)

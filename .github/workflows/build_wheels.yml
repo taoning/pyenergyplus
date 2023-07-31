@@ -37,6 +37,11 @@ jobs:
         sudo apt-get install ninja-build
         python setup.py bdist_wheel
 
+    - name: test
+      run: |
+        cd test
+        python test.py
+
     - uses: actions/upload-artifact@v3
       with:
         name: dist
@@ -70,6 +75,11 @@ jobs:
         cd ..
         brew install ninja
         python setup.py bdist_wheel
+         
+    - name: test
+      run: |
+        cd test
+        python test.py
 
     - uses: actions/upload-artifact@v3
       with:
@@ -106,6 +116,11 @@ jobs:
         git checkout $EnergyPlus_Commit
         cd ..
         python setup.py bdist_wheel
+
+    - name: test
+      run: |
+        cd test
+        python test.py
 
     - uses: actions/upload-artifact@v3
       with:
