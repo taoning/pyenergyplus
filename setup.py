@@ -97,7 +97,7 @@ class CMakeBuild(build_ext):
             build_tool,
         ]
         pypath = sys.executable
-        print(pypath)
+        print(os.listdir(os.path.dirname(pypath)))
 
         cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
