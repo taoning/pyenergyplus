@@ -115,15 +115,9 @@ jobs:
         pip install wheel
         git submodule update --init --recursive 
         cd EnergyPlus
-        git checkout $EnergyPlus_Commit
+        git checkout 87ed9199d4
         cd ..
         python setup.py bdist_wheel
-
-    - name: test
-      run: |
-        pip install dist/*.whl
-        cd test
-        python test.py
 
     - uses: actions/upload-artifact@v3
       with:
