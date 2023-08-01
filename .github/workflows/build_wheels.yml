@@ -39,7 +39,7 @@ jobs:
 
     - name: test
       run: |
-        pip install .
+        pip install dist/*.whl
         cd test
         python test.py
 
@@ -79,7 +79,7 @@ jobs:
          
     - name: test
       run: |
-        pip install .
+        pip install dist/*.whl
         cd test
         python test.py
 
@@ -121,7 +121,7 @@ jobs:
 
     - name: test
       run: |
-        pip install .
+        pip install dist/*.whl
         cd test
         python test.py
 
