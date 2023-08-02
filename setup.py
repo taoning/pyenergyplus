@@ -84,20 +84,15 @@ class CMakeBuild(build_ext):
         else:
             arch = None
 
-        build_tool = cfg["build_tool"]
-
         # call cmake to configure the build
-
         pdir = Path("Products")
-        readvarseso_path = pdir / "ReadVarsESO"
 
         cmake_cmd = [
             "cmake",
             "-G",
-            build_tool,
+            cfg["build_tool"]
         ]
         pypath = sys.executable
-        print(os.listdir(os.path.dirname(pypath)))
 
         cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
@@ -115,7 +110,6 @@ class CMakeBuild(build_ext):
             cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
-            readvarseso_path = readvarseso_path.with_suffix(".exe")
         cmake_cmd.append(ext.cmake_source_dir)
 
         sp.check_call(cmake_cmd)
@@ -128,7 +122,6 @@ class CMakeBuild(build_ext):
         lib_files = pdir.glob(f"*.{file_extension}*")
         for file in lib_files:
             shutil.move(str(file), build_lib)
-        shutil.move(str(readvarseso_path), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
             shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
