@@ -98,12 +98,8 @@ class CMakeBuild(build_ext):
         if arch:
             cmake_cmd += ["-A", arch]
         cmake_cmd.append("-DBUILD_FORTRAN=OFF")
-        if platform.system().lower() == "darwin":
+        if platform.system().lower() != "windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
-            cmake_cmd.append("-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=12.1")
-        if platform.system().lower() == "linux":
-            cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
-        # Assuming Windows
         else:
             cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
             cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.8")
