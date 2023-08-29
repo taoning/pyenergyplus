@@ -1,13 +1,15 @@
-from setuptools import setup
-import platform
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 import os
+import shutil
+import platform
+from pathlib import Path
+import subprocess as sp
+import sys
 
-# Determine the platform and Python version
-package = 'pyenergyplus'
-plat = platform.system().lower()
-machine = platform.machine().lower()
-py_version = platform.python_version_tuple()
-py_version_str = f"{py_version[0]}{py_version[1]}"
+from wheel.bdist_wheel import bdist_wheel
+
+
 wheels = {
     "darwin": {
         "x86_64": {
@@ -43,15 +45,99 @@ wheels = {
         },
     },
 }
+platform_file_extension = {"Darwin": "dylib", "Linux": "so", "Windows": "dll"}
+libdir = list(Path("build").glob("lib*"))
+if len(libdir) > 0:
+    shutil.rmtree(libdir[0], ignore_errors=True)
+wheel = wheels[platform.system().lower()][platform.machine().lower()]
 
-wheel = wheels[plat][machine]['wheel']
-# Define the URL template for the wheels
-url = f"https://github.com/taoning/pyenergyplus/raw/main/wheels/{plat}/{package}-23.1.0-py3-none-{wheel}.whl"
+
+class PyenergyplusBDistWheel(bdist_wheel):
+    def get_tag(self):
+        return "py3", "none", wheel["wheel"]
+
+
+# This class handles the CMake build
+class CMakeExtension(Extension):
+    def __init__(self, name, cmake_source_dir="", sourcedir=""):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
+        self.cmake_source_dir = os.path.abspath(cmake_source_dir)
+
+
+class CMakeBuild(build_ext):
+    def run(self):
+        for ext in self.extensions:
+            self.build_cmake(ext)
+
+    def build_cmake(self, ext):
+        cwd = os.getcwd()
+
+        build_temp = os.path.abspath(self.build_temp)
+        build_lib = os.path.abspath(self.build_lib)
+
+        os.makedirs(build_temp, exist_ok=True)
+        os.chdir(build_temp)
+
+        cfg = wheels[platform.system().lower()][platform.machine().lower()]
+        if "arch" in cfg:
+            arch = cfg['arch']
+        else:
+            arch = None
+
+        # call cmake to configure the build
+        pdir = Path("Products")
+
+        cmake_cmd = [
+            "cmake",
+            "-G",
+            cfg["build_tool"]
+        ]
+        pypath = sys.executable
+
+        cmake_build_cmd = ["cmake", "--build", "."]
+        if arch:
+            cmake_cmd += ["-A", arch]
+        cmake_cmd.append("-DBUILD_FORTRAN=OFF")
+        if platform.system().lower() != "windows":
+            cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
+        else:
+            cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
+            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.8")
+            cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
+            cmake_build_cmd += ["--config", "Release"]
+            pdir = Path("Products") / "Release"
+        cmake_cmd.append(ext.cmake_source_dir)
+
+        sp.check_call(cmake_cmd)
+
+        sp.check_call(cmake_build_cmd)
+
+        output_dir = os.path.join(build_lib, ext.name)
+        os.makedirs(output_dir, exist_ok=True)
+        file_extension = platform_file_extension[platform.system()]
+        lib_files = pdir.glob(f"*.{file_extension}*")
+        for file in lib_files:
+            shutil.move(str(file), build_lib)
+        sdir = pdir / "pyenergyplus"
+        for file in sdir.glob("*.py"):
+            shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
+        os.chdir(cwd)
+
 
 setup(
-    name='pyenergyplus',
-    version='23.1.0',
-    install_requires=['pyenergyplus'],
-    dependency_links=[url],
+    name="pyenergyplus_lbnl",
+    version="23.1.0",
+    packages=[],
+    license="LICENSE.txt",
+    author="LBNL",
+    author_email="taoningwang@lbl.gov",
+    url="https://github.com/taoning/pyenergyplus",
+    description="Direct port of pyenergyplus that comes with EnergyPlus into a standalone Python package",
+    long_description=Path("README.md").read_text(),
+    ext_modules=[CMakeExtension("pyenergyplus", "EnergyPlus", "EnergyPlus")],
+    cmdclass={
+        "build_ext": CMakeBuild,
+        "bdist_wheel": PyenergyplusBDistWheel,
+    },
 )
-
