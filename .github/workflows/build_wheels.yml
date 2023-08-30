@@ -30,12 +30,12 @@ jobs:
     - name: build wheels
       run: |
         pip install wheel
-        git submodule update --init --recursive 
+        git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
         cd ..
         sudo apt-get install ninja-build
-        python build.py bdist_wheel
+        python setup.py bdist_wheel
 
     - uses: actions/upload-artifact@v3
       with:
@@ -64,12 +64,12 @@ jobs:
     - name: Install and test
       run: |
         pip install wheel
-        git submodule update --init --recursive 
+        git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
         cd ..
         brew install ninja
-        python build.py bdist_wheel
+        python setup.py bdist_wheel
 
     - uses: actions/upload-artifact@v3
       with:
@@ -101,11 +101,11 @@ jobs:
     - name: Install and test
       run: |
         pip install wheel
-        git submodule update --init --recursive 
+        git submodule update --init --recursive
         cd EnergyPlus
         git checkout 87ed9199d4
         cd ..
-        python build.py bdist_wheel
+        python setup.py bdist_wheel
 
     - uses: actions/upload-artifact@v3
       with:
