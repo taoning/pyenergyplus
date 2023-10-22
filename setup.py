@@ -45,12 +45,79 @@ wheels = {
         },
     },
 }
-platform_file_extension = {"Darwin": "dylib", "Linux": "so", "Windows": "dll"}
+platform_file_extension = {
+    "Darwin": {
+        "lib": "dylib",
+        "exe": "",
+    },
+    "Linux": {
+        "lib": "so",
+        "exe": "",
+    },
+    "Windows": {
+        "lib": "dll",
+        "exe": ".exe",
+    }
+}
 libdir = list(Path("build").glob("lib*"))
 if len(libdir) > 0:
     shutil.rmtree(libdir[0], ignore_errors=True)
 wheel = wheels[platform.system().lower()][platform.machine().lower()]
 
+# Model files
+ref_files = [
+    "RefBldgFullServiceRestaurantNew2004_Chicago.idf",
+    "RefBldgHospitalNew2004_Chicago.idf",
+    "RefBldgLargeHotelNew2004_Chicago.idf",
+    "RefBldgLargeOfficeNew2004_Chicago.idf",
+    "RefBldgMediumOfficeNew2004_Chicago.idf",
+    "RefBldgMidriseApartmentNew2004_Chicago.idf",
+    "RefBldgOutPatientNew2004_Chicago.idf",
+    "RefBldgPrimarySchoolNew2004_Chicago.idf",
+    "RefBldgQuickServiceRestaurantNew2004_Chicago.idf",
+    "RefBldgSecondarySchoolNew2004_Chicago.idf",
+    "RefBldgSmallHotelNew2004_Chicago.idf",
+    "RefBldgSmallOfficeNew2004_Chicago.idf",
+    "RefBldgStand-aloneRetailNew2004_Chicago.idf",
+    "RefBldgStripMallNew2004_Chicago.idf",
+    "RefBldgSuperMarketNew2004_Chicago.idf",
+    "RefBldgWarehouseNew2004_Chicago.idf",
+    "ASHRAE901_ApartmentHighRise_STD2019_Denver.idf",
+    "ASHRAE901_ApartmentMidRise_STD2019_Denver.idf",
+    "ASHRAE901_Hospital_STD2019_Denver.idf",
+    "ASHRAE901_HotelLarge_STD2019_Denver.idf",
+    "ASHRAE901_HotelSmall_STD2019_Denver.idf",
+    "ASHRAE901_OfficeLarge_STD2019_Denver.idf",
+    "ASHRAE901_OfficeMedium_STD2019_Denver.idf",
+    "ASHRAE901_OfficeSmall_STD2019_Denver.idf",
+    "ASHRAE901_OutPatientHealthCare_STD2019_Denver.idf",
+    "ASHRAE901_RestaurantFastFood_STD2019_Denver.idf",
+    "ASHRAE901_RestaurantSitDown_STD2019_Denver.idf",
+    "ASHRAE901_RetailStandalone_STD2019_Denver.idf",
+    "ASHRAE901_RetailStripmall_STD2019_Denver.idf",
+    "ASHRAE901_SchoolPrimary_STD2019_Denver.idf",
+    "ASHRAE901_SchoolSecondary_STD2019_Denver.idf",
+    "ASHRAE901_Warehouse_STD2019_Denver.idf",
+]
+
+weather_files = [
+    "USA_AZ_Phoenix-Sky.Harbor.Intl.AP.722780_TMY3.epw",
+    "USA_CA_Fresno.Air.Terminal.723890_TMY3.epw",
+    "USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw",
+    "USA_CO_Boulder-Broomfield-Jefferson.County.AP.724699_TMY3.epw",
+    "USA_CO_Colorado.Springs-Peterson.Field.724660_TMY3.epw",
+    "USA_CO_Denver-Aurora-Buckley.AFB.724695_TMY3.epw",
+    "USA_CO_Golden-NREL.724666_TMY3.epw",
+    "USA_FL_Miami.Intl.AP.722020_TMY3.epw",
+    "USA_FL_Orlando.Intl.AP.722050_TMY3.epw",
+    "USA_FL_Tampa.Intl.AP.722110_TMY3.epw",
+    "USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw",
+    "USA_IL_University.of.Illinois-Willard.AP.725315_TMY3.epw",
+    "USA_NJ_Newark.Intl.AP.725020_TMY3.epw",
+    "USA_NV_Las.Vegas-McCarran.Intl.AP.723860_TMY3.epw",
+    "USA_OK_Oklahoma.City-Will.Rogers.World.AP.723530_TMY3.epw",
+    "USA_VA_Sterling-Washington.Dulles.Intl.AP.724030_TMY3.epw",
+]
 
 class PyenergyplusBDistWheel(bdist_wheel):
     def get_tag(self):
@@ -73,6 +140,9 @@ class CMakeBuild(build_ext):
     def build_cmake(self, ext):
         cwd = os.getcwd()
 
+        ep_dir = Path("EnergyPlus")
+        model_dir = (ep_dir / "testfiles").resolve()
+        weather_dir = (ep_dir / "weather").resolve()
         build_temp = os.path.abspath(self.build_temp)
         build_lib = os.path.abspath(self.build_lib)
 
@@ -108,26 +178,37 @@ class CMakeBuild(build_ext):
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
         cmake_cmd.append(ext.cmake_source_dir)
-
         sp.check_call(cmake_cmd)
-
         sp.check_call(cmake_build_cmd)
-
         output_dir = os.path.join(build_lib, ext.name)
         os.makedirs(output_dir, exist_ok=True)
         file_extension = platform_file_extension[platform.system()]
-        lib_files = pdir.glob(f"*.{file_extension}*")
+        lib_files = pdir.glob(f"*.{file_extension['lib']}*")
         for file in lib_files:
             shutil.move(str(file), build_lib)
+        # ExpandObject
+        expandobject_path = pdir / ("ExpandObjects" + file_extension["exe"])
+        if expandobject_path.exists():
+            shutil.move(str(expandobject_path), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
             shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
+        pyepdir = Path(build_lib) / "pyenergyplus"
+        mdir = pyepdir / "data" / "model"
+        wdir = pyepdir / "data" / "weather"
+        mdir.mkdir(parents=True, exist_ok=True)
+        wdir.mkdir(parents=True, exist_ok=True)
+        for mfile in ref_files:
+            shutil.copy(str(model_dir / mfile), mdir)
+        for wfile in weather_files:
+            shutil.copy(str(weather_dir / wfile), wdir)
+        shutil.copy(os.path.join(cwd, "src", "dataset.py"), os.path.join(build_lib, "pyenergyplus"))
         os.chdir(cwd)
 
 
 setup(
     name="pyenergyplus_lbnl",
-    version="23.1.0",
+    version="23.2.0",
     packages=[],
     license="LICENSE.txt",
     author="LBNL",
