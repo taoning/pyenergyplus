@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  EnergyPlus_Commit: 87ed9199d4
+  EnergyPlus_Commit: 7636e6b
 
 jobs:
   build_ubuntu:
@@ -103,7 +103,7 @@ jobs:
         pip install wheel
         git submodule update --init --recursive
         cd EnergyPlus
-        git checkout 87ed9199d4
+        git checkout 7636e6b
         cd ..
         python setup.py bdist_wheel
 
