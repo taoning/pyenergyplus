@@ -169,6 +169,8 @@ class CMakeBuild(build_ext):
         if arch:
             cmake_cmd += ["-A", arch]
         cmake_cmd.append("-DBUILD_FORTRAN=OFF")
+        if platform.system().lower() == "darwin":
+            cmake_cmd.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=12.1")
         if platform.system().lower() != "windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
         else:
