@@ -21,6 +21,9 @@ wheels = {
             "wheel": "macosx_11_0_arm64",
             "zip_tag": "OSX_arm64",
             "build_tool": "Ninja",
+            "cxx": "/opt/homebrew/bin/c++-14",
+            "cc": "/opt/homebrew/bin/gcc-14",
+            "cmake": "/opt/homebrew/bin/cmake",
         },
     },
     "linux": {
@@ -35,13 +38,13 @@ wheels = {
             "wheel": "win32",
             "zip_tag": "Windows",
             "arch": "x64",
-            "build_tool": "Visual Studio 16 2019",
+            "build_tool": "Visual Studio 17 2022",
         },
         "amd64": {
             "wheel": "win_amd64",
             "zip_tag": "Windows",
             "arch": "x64",
-            "build_tool": "Visual Studio 16 2019",
+            "build_tool": "Visual Studio 17 2022",
         },
     },
 }
@@ -168,14 +171,20 @@ class CMakeBuild(build_ext):
         cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
             cmake_cmd += ["-A", arch]
+
         cmake_cmd.append("-DBUILD_FORTRAN=OFF")
+
         if platform.system().lower() == "darwin":
             cmake_cmd.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=12.1")
+            cmake_cmd.append(f"-DCMAKE_CXX_COMPILER={cfg["cxx"]}")
+            cmake_cmd.append(f"-DCMAKE_C_COMPILER={cfg["cc"]}")
+
         if platform.system().lower() != "windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
+
         else:
             cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
-            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.8")
+            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.10")
             cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
