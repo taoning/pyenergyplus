@@ -178,8 +178,8 @@ class CMakeBuild(build_ext):
 
         if platform.system().lower() == "darwin":
             cmake_cmd.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=12.1")
-            cmake_cmd.append(f"-DCMAKE_CXX_COMPILER={cfg["cxx"]}")
-            cmake_cmd.append(f"-DCMAKE_C_COMPILER={cfg["cc"]}")
+            cmake_cmd.append(f"-DCMAKE_CXX_COMPILER={cfg['cxx']}")
+            cmake_cmd.append(f"-DCMAKE_C_COMPILER={cfg['cc']}")
 
         if platform.system().lower() != "windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
