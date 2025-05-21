@@ -187,7 +187,6 @@ class CMakeBuild(build_ext):
         else:
             cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
             cmake_cmd.append("--DCMAKE_CXX_STANDARD=17")
-            cmake_cmd.append("--DPYTHON_CLI:BOOL=OFF")
             cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.10")
             cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
             cmake_build_cmd += ["--config", "Release"]
