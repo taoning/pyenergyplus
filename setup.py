@@ -220,13 +220,13 @@ class CMakeBuild(build_ext):
 
 
 setup(
-    name="pyenergyplus_lbnl",
+    name="pyenergyplus",
     version="24.1.0",
     packages=[],
     license="LICENSE.txt",
     author="LBNL",
-    author_email="taoningwang@lbl.gov",
-    url="https://github.com/taoning/pyenergyplus",
+    author_email="boris.brangeon@plateforme-tipee.com",
+    url="https://github.com/bbrangeo/pyenergyplus.git",
     description="Direct port of pyenergyplus that comes with EnergyPlus into a standalone Python package",
     long_description=Path("README.md").read_text(),
     ext_modules=[CMakeExtension("pyenergyplus", "EnergyPlus", "EnergyPlus")],
