@@ -168,7 +168,9 @@ class CMakeBuild(build_ext):
         ]
         pypath = sys.executable
 
-        cmake_build_cmd = ["cmake", "--build", "."]
+        num_cores = os.cpu_count()
+        cmake_build_cmd = ["cmake", "--build", ".", f"-j{num_cores}"]
+
         if arch:
             cmake_cmd += ["-A", arch]
 
