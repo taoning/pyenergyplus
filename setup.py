@@ -210,7 +210,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="pyenergyplus_lbnl",
-    version="25.1.0",
+    version="25.1.1",
     packages=[],
     license="LICENSE.txt",
     author="LBNL",

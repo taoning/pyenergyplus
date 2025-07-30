@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  EnergyPlus_Commit: 7636e6b
+  EnergyPlus_Commit: 68a4a7c
 
 jobs:
   build_ubuntu:
