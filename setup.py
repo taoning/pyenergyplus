@@ -175,7 +175,7 @@ class CMakeBuild(build_ext):
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
         else:
             cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
-            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.8")
+            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.9")
             cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
