@@ -35,13 +35,13 @@ wheels = {
             "wheel": "win32",
             "zip_tag": "Windows",
             "arch": "x64",
-            "build_tool": "Visual Studio 16 2019",
+            "build_tool": "Visual Studio 17 2022",
         },
         "amd64": {
             "wheel": "win_amd64",
             "zip_tag": "Windows",
             "arch": "x64",
-            "build_tool": "Visual Studio 16 2019",
+            "build_tool": "Visual Studio 17 2022",
         },
     },
 }
