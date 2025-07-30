@@ -39,7 +39,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-ubuntu
         path: ./dist
 
 
@@ -73,7 +73,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-osx
         path: ./dist
 
 
@@ -109,5 +109,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-windows
         path: ./dist
