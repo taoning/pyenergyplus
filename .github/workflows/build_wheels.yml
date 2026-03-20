@@ -29,7 +29,7 @@ jobs:
 
     - name: build wheels
       run: |
-        pip install wheel "datamodel-code-generator>=0.55.0"
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
@@ -67,7 +67,7 @@ jobs:
 
     - name: Install and test
       run: |
-        pip install wheel "datamodel-code-generator>=0.55.0"
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
@@ -111,10 +111,10 @@ jobs:
 
     - name: Install and test
       run: |
-        pip install wheel "datamodel-code-generator>=0.55.0"
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
-        git checkout $EnergyPlus_Commit
+        git checkout %EnergyPlus_Commit%
         cd ..
         python setup.py bdist_wheel
 
