@@ -73,7 +73,7 @@ jobs:
         git checkout $EnergyPlus_Commit
         cd ..
         brew install ninja gcc
-        echo "FC=$(ls $(brew --prefix gcc)/bin/gfortran-* | sort | tail -1)" >> $GITHUB_ENV
+        export FC=$(ls $(brew --prefix gcc)/bin/gfortran-* | sort | tail -1)
         python setup.py bdist_wheel
 
     - name: Run tests
@@ -119,6 +119,7 @@ jobs:
         python setup.py bdist_wheel
 
     - name: Run tests
+      shell: bash
       run: |
         pip install dist/*.whl
         cd test
