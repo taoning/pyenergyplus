@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  EnergyPlus_Commit: 68a4a7c
+  EnergyPlus_Commit: cf73682
 
 jobs:
   build_ubuntu:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.12"]
 
     steps:
     - name: Checkout pyenergyplus
@@ -29,13 +29,19 @@ jobs:
 
     - name: build wheels
       run: |
-        pip install wheel
+        pip install wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
         cd ..
-        sudo apt-get install ninja-build
+        sudo apt-get install ninja-build gfortran
         python setup.py bdist_wheel
+
+    - name: Run tests
+      run: |
+        pip install dist/*.whl
+        cd test
+        python -m unittest discover -s . -p "test_*.py"
 
     - uses: actions/upload-artifact@v4
       with:
@@ -45,12 +51,10 @@ jobs:
 
   build_test_osx:
     runs-on: macos-latest
-    env:
-      FC: gfortran-11
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.12"]
 
     steps:
     - name: Checkout pyenergyplus
@@ -63,13 +67,20 @@ jobs:
 
     - name: Install and test
       run: |
-        pip install wheel
+        pip install wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
         git checkout $EnergyPlus_Commit
         cd ..
-        brew install ninja
+        brew install ninja gcc
+        echo "FC=$(ls $(brew --prefix gcc)/bin/gfortran-* | sort | tail -1)" >> $GITHUB_ENV
         python setup.py bdist_wheel
+
+    - name: Run tests
+      run: |
+        pip install dist/*.whl
+        cd test
+        python -m unittest discover -s . -p "test_*.py"
 
     - uses: actions/upload-artifact@v4
       with:
@@ -84,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.12"]
     defaults:
       run:
         shell: cmd
@@ -100,12 +111,18 @@ jobs:
 
     - name: Install and test
       run: |
-        pip install wheel
+        pip install wheel "datamodel-code-generator>=0.55.0"
         git submodule update --init --recursive
         cd EnergyPlus
-        git checkout 7636e6b
+        git checkout $EnergyPlus_Commit
         cd ..
         python setup.py bdist_wheel
+
+    - name: Run tests
+      run: |
+        pip install dist/*.whl
+        cd test
+        python -m unittest discover -s . -p "test_*.py"
 
     - uses: actions/upload-artifact@v4
       with:

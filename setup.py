@@ -1,5 +1,6 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import json
 import os
 import shutil
 import platform
@@ -8,6 +9,110 @@ import subprocess as sp
 import sys
 
 from wheel.bdist_wheel import bdist_wheel
+
+
+def _remove_empty_string_enums(schema):
+    if isinstance(schema, dict):
+        for key, value in schema.items():
+            if key == "enum" and isinstance(value, list):
+                schema[key] = [item for item in value if item != ""]
+            else:
+                _remove_empty_string_enums(value)
+    elif isinstance(schema, list):
+        for item in schema:
+            _remove_empty_string_enums(item)
+
+
+def _replace_enum_with_ref(obj):
+    if isinstance(obj, dict):
+        for key, value in list(obj.items()):
+            if key == "enum" and "No" in value and "Yes" in value:
+                obj.clear()
+                obj["$ref"] = "#/definitions/EPBoolean"
+            else:
+                _replace_enum_with_ref(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _replace_enum_with_ref(item)
+
+
+def generate_epjson_schema(ep_dir):
+    """Generate Energy+.schema.epJSON from the EnergyPlus IDD source."""
+    idd_dir = Path(ep_dir) / "idd"
+    schema_script = idd_dir / "schema" / "generate_epJSON_schema.py"
+    sp.check_call([sys.executable, str(schema_script), str(idd_dir)])
+    return idd_dir / "Energy+.schema.epJSON"
+
+
+def _strip_numeric_constraints_in_anyof(schema):
+    """Strip numeric constraints from anyOf branches that coexist with a string branch.
+
+    When a field accepts either a number or a sentinel string like "Autosize",
+    datamodel-code-generator would normally generate a constrained RootModel[float]
+    for the numeric branch (e.g. RootModel[float] with gt=0.0).  With reuse_model=True
+    that same class can end up with a string default ("Autocalculate"), which breaks
+    pydantic's default_factory at runtime.  Dropping the numeric constraints here keeps
+    the numeric branch as a plain float so the union float | Literal["Autosize"] is
+    generated correctly and the string default is valid.
+    """
+    if isinstance(schema, dict):
+        if "anyOf" in schema:
+            variants = schema["anyOf"]
+            has_number = any(
+                isinstance(v, dict) and v.get("type") == "number" for v in variants
+            )
+            has_string = any(
+                isinstance(v, dict) and v.get("type") == "string" for v in variants
+            )
+            if has_number and has_string:
+                for v in variants:
+                    if isinstance(v, dict) and v.get("type") == "number":
+                        for key in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"):
+                            v.pop(key, None)
+        for v in schema.values():
+            _strip_numeric_constraints_in_anyof(v)
+    elif isinstance(schema, list):
+        for item in schema:
+            _strip_numeric_constraints_in_anyof(item)
+
+
+def generate_model(schema_path, output_path):
+    """Generate pydantic model from the epJSON schema."""
+    from datamodel_code_generator import (
+        DataModelType,
+        InputFileType,
+        LiteralType,
+        PythonVersion,
+        generate,
+    )
+
+    schema = json.loads(Path(schema_path).read_text())
+
+    _replace_enum_with_ref(schema)
+    _remove_empty_string_enums(schema)
+    _strip_numeric_constraints_in_anyof(schema)
+
+    schema.setdefault("definitions", {})["EPBoolean"] = {
+        "type": "string",
+        "enum": ["No", "Yes"],
+        "default": "No",
+    }
+
+    generate(
+        json.dumps(schema),
+        input_file_type=InputFileType.JsonSchema,
+        output=Path(output_path),
+        output_model_type=DataModelType.PydanticV2BaseModel,
+        snake_case_field=True,
+        use_double_quotes=True,
+        enum_field_as_literal=LiteralType.One,
+        reuse_model=True,
+        field_constraints=True,
+        use_annotated=True,
+        set_default_enum_member=True,
+        target_python_version=PythonVersion.PY_310,
+        class_name="EnergyPlusModel",
+    )
 
 
 wheels = {
@@ -168,17 +273,24 @@ class CMakeBuild(build_ext):
         cmake_build_cmd = ["cmake", "--build", "."]
         if arch:
             cmake_cmd += ["-A", arch]
-        cmake_cmd.append("-DBUILD_FORTRAN=OFF")
+        cmake_cmd.append("-DBUILD_FORTRAN=ON")
         if platform.system().lower() == "darwin":
             cmake_cmd.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=12.1")
         if platform.system().lower() != "windows":
             cmake_cmd.append("-DCMAKE_BUILD_TYPE=Release")
         else:
             cmake_cmd.append("-DLINK_WITH_PYTHON:BOOL=ON")
-            cmake_cmd.append("-DPython_REQUIRED_VERSION:STRING=3.9")
+            py_ver = f"{sys.version_info.major}.{sys.version_info.minor}"
+            cmake_cmd.append(f"-DPython_REQUIRED_VERSION:STRING={py_ver}")
             cmake_cmd.append(f"-DPython_ROOT_DIR:PATH={os.path.dirname(pypath)}")
+            mingw_gfortran = os.environ.get(
+                "CMAKE_Fortran_COMPILER",
+                "C:/msys64/mingw64/bin/gfortran.exe"
+            )
+            cmake_cmd.append(f"-DMINGW_GFORTRAN={mingw_gfortran}")
             cmake_build_cmd += ["--config", "Release"]
             pdir = Path("Products") / "Release"
+        exe_dir = Path("Products")
         cmake_cmd.append(ext.cmake_source_dir)
         sp.check_call(cmake_cmd)
         sp.check_call(cmake_build_cmd)
@@ -188,10 +300,14 @@ class CMakeBuild(build_ext):
         lib_files = pdir.glob(f"*.{file_extension['lib']}*")
         for file in lib_files:
             shutil.move(str(file), build_lib)
-        # ExpandObject
-        expandobject_path = pdir / ("ExpandObjects" + file_extension["exe"])
+        # ExpandObjects
+        expandobject_path = exe_dir / ("ExpandObjects" + file_extension["exe"])
         if expandobject_path.exists():
             shutil.move(str(expandobject_path), build_lib)
+        # ReadVarsESO
+        readvars_path = exe_dir / ("ReadVarsESO" + file_extension["exe"])
+        if readvars_path.exists():
+            shutil.move(str(readvars_path), build_lib)
         sdir = pdir / "pyenergyplus"
         for file in sdir.glob("*.py"):
             shutil.move(str(file), os.path.join(build_lib, "pyenergyplus"))
@@ -205,13 +321,22 @@ class CMakeBuild(build_ext):
         for wfile in weather_files:
             shutil.copy(str(weather_dir / wfile), wdir)
         shutil.copy(os.path.join(cwd, "src", "dataset.py"), os.path.join(build_lib, "pyenergyplus"))
+        model_src = Path(cwd) / "src" / "model"
+        model_dst = Path(build_lib) / "pyenergyplus" / "model"
+        model_dst.mkdir(parents=True, exist_ok=True)
+        for fname in ("__init__.py", "builder.py"):
+            shutil.copy(str(model_src / fname), str(model_dst / fname))
+        schema_path = generate_epjson_schema(Path(cwd) / "EnergyPlus")
+        generate_model(schema_path, model_dst / "model.py")
         os.chdir(cwd)
 
 
 setup(
     name="pyenergyplus_lbnl",
-    version="25.1.2",
+    version="25.2.0",
     packages=[],
+    setup_requires=["datamodel-code-generator>=0.55.0"],
+    install_requires=["pydantic>=2.3.0"],
     license="LICENSE.txt",
     author="LBNL",
     author_email="taoningwang@lbl.gov",
