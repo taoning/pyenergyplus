@@ -343,6 +343,7 @@ setup(
     url="https://github.com/taoning/pyenergyplus",
     description="Direct port of pyenergyplus that comes with EnergyPlus into a standalone Python package",
     long_description=Path("README.md").read_text(),
+    long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension("pyenergyplus", "EnergyPlus", "EnergyPlus")],
     cmdclass={
         "build_ext": CMakeBuild,
