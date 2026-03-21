@@ -270,7 +270,7 @@ class CMakeBuild(build_ext):
         ]
         pypath = sys.executable
 
-        cmake_build_cmd = ["cmake", "--build", "."]
+        cmake_build_cmd = ["cmake", "--build", ".", f"-j{os.cpu_count()}"]
         if arch:
             cmake_cmd += ["-A", arch]
         cmake_cmd.append("-DBUILD_FORTRAN=ON")
