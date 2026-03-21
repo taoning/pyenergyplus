@@ -61,18 +61,3 @@ from pyenergyplus.dataset import ref_models, ashrae_models, weather_files
 idf_path = ref_models["large_office"]
 epw_path = weather_files["chicago"]
 ```
-
-## Codegen (regenerating `pyenergyplus.model.model`)
-
-When upgrading EnergyPlus, regenerate the Pydantic models from the new schema:
-
-```bash
-# 1. Copy the new schema into codegen/
-cp /path/to/EnergyPlus/Energy+.schema.epJSON codegen/
-
-# 2. Regenerate
-python codegen/codegen.py
-```
-
-The output is written to `src/model/model.py`. Commit both the updated schema
-and the regenerated file together with the submodule bump.
