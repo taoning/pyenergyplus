@@ -1,0 +1,130 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+env:
+  EnergyPlus_Commit: cf73682
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build wheel
+      run: |
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
+        git submodule update --init --recursive
+        cd EnergyPlus
+        git checkout $EnergyPlus_Commit
+        cd ..
+        sudo apt-get install ninja-build gfortran
+        python setup.py bdist_wheel
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist-ubuntu
+        path: ./dist
+
+
+  build_osx:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build wheel
+      run: |
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
+        git submodule update --init --recursive
+        cd EnergyPlus
+        git checkout $EnergyPlus_Commit
+        cd ..
+        brew install ninja gcc
+        export FC=$(ls $(brew --prefix gcc)/bin/gfortran-* | sort | tail -1)
+        python setup.py bdist_wheel
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist-osx
+        path: ./dist
+
+
+  build_windows:
+    runs-on: windows-latest
+    env:
+      CMAKE_Fortran_COMPILER: "/c/msys64/mingw64/bin/x86_64-w64-mingw32-gfortran.exe"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+    - name: Checkout pyenergyplus
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build wheel
+      run: |
+        pip install setuptools wheel "datamodel-code-generator>=0.55.0"
+        git submodule update --init --recursive
+        cd EnergyPlus
+        git checkout %EnergyPlus_Commit%
+        cd ..
+        python setup.py bdist_wheel
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist-windows
+        path: ./dist
+
+
+  publish:
+    needs: [build_ubuntu, build_osx, build_windows]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: dist-*
+        path: dist
+        merge-multiple: true
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: dist
