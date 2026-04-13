@@ -1,4 +1,4 @@
 [submodule "EnergyPlus"]
 	path = EnergyPlus
-	url = https://github.com/NREL/EnergyPlus
+	url = https://github.com/NatLabRockies/EnergyPlus
 	branch = develop

@@ -333,7 +333,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="pyenergyplus_lbnl",
-    version="25.2.0",
+    version="26.1.0",
     packages=[],
     setup_requires=["datamodel-code-generator>=0.55.0"],
     install_requires=["pydantic>=2.3.0"],
